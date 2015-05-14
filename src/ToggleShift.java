@@ -27,12 +27,21 @@ public class ToggleShift
 	};
 	
 	private final int KEY_CODE = KeyEvent.VK_CLOSE_BRACKET;
-	private final long REPEAT_DELAY = 100;
+	private final long REPEAT_DELAY  = 100;
+	private final long POLLING_DELAY =  20;
 	
-	/** <code>true</code> if we are holding shift */
-	private volatile boolean state;
+	/** <code>true</code> if we want to be holding the key */
+	private volatile boolean desiredState;
+	
+	private volatile boolean aiming;
+	
+	private volatile boolean firing;
+	
 	private Object lock;
 	private Robot robot;
+	
+	private Controller keyboard;
+	private Controller mouse;
 	
 	public static void main(String[] args)
 	{
@@ -46,24 +55,28 @@ public class ToggleShift
 		}
 	}
 	
-	private Controller keyboard;
-	
 	public ToggleShift() throws AWTException
 	{
-		state = false;
+		desiredState = false;
+		aiming = false;
+		firing = false;
+		
 		lock = new Object();
 		robot = new Robot();
+		
 		initializeJInput();
 	}
 	
 	public void run()
 	{
 		
-		Thread spamThread = new Thread(){
+		Thread spamThread = new Thread("spam thread"){
 
 			@Override
 			public void run()
 			{
+				boolean pressed = false;
+				
 				while (true)
 				{
 					synchronized(lock)
@@ -79,9 +92,10 @@ public class ToggleShift
 						}
 					}
 					
-					while (state)
+					while (desiredState && !aiming && !firing)
 					{
 						robot.keyPress(KEY_CODE);
+						pressed = true;
 						try
 						{
 							Thread.sleep(REPEAT_DELAY);
@@ -93,49 +107,131 @@ public class ToggleShift
 						}
 					}
 					
-					robot.keyRelease(KEY_CODE);
+					if (pressed)
+					{
+						robot.keyRelease(KEY_CODE);
+						pressed = false;
+					}
 				}
 			}
 		};
 		spamThread.start();
 		
-		EventQueue eventQueue = keyboard.getEventQueue();
-		Event event = new Event();
+		final EventQueue keyboardEventQueue = keyboard.getEventQueue();
+		final Event keyboardEvent = new Event();
 		
-		while (keyboard.poll())
-		{
-			while (eventQueue.getNextEvent(event))
+		final EventQueue mouseEventQueue = mouse.getEventQueue();
+		final Event mouseEvent = new Event();
+		
+		//final Component mouseLeft = mouse.getComponent(Component.Identifier.Button.LEFT);
+		//final Component mouseRight = mouse.getComponent(Component.Identifier.Button.RIGHT);
+		
+		Thread keyboadThread = new Thread("keyboard thread") {
+			@Override
+			public void run()
 			{
-				if (event.getValue() == 1.0)
+				while (keyboard.poll())
 				{
-					if (event.getComponent().getIdentifier().equals(Component.Identifier.Key.LSHIFT))
+					while (keyboardEventQueue.getNextEvent(keyboardEvent))
 					{
-						if (state) // we are holding shift currently
+						// if the toggle key has been pressed
+						if ( keyboardEvent.getComponent().getIdentifier().equals(Component.Identifier.Key.LSHIFT)
+								&& keyboardEvent.getValue() == 1.0f )
 						{
-							state = false; // signal our thread to release the key
-						}
-						else // we are not holding shift currently
-						{
-							synchronized (lock)
+							
+							if (desiredState) // we want to be holding the key currently
 							{
-								state = true; // signal our thread to hold the key
-								lock.notify(); // wake the thread
+								desiredState = false; // signal our thread to release the key
+								
+							}
+							else // we are not holding shift currently
+							{
+								synchronized (lock)
+								{
+									desiredState = true; // signal our thread to hold the key
+									lock.notify(); // wake the thread
+								}
 							}
 						}
-						
-						robot.keyPress(KeyEvent.VK_INSERT);
+					}
+					
+					try
+					{
+						Thread.sleep(POLLING_DELAY);
+					}
+					catch (InterruptedException e)
+					{
+						e.printStackTrace();
+						return;
 					}
 				}
 			}
-			
-			try
+		};
+		keyboadThread.start();
+		
+		Thread mouseThread = new Thread("mouse thread") {
+			@Override
+			public void run()
 			{
-				Thread.sleep(200);
+				while (mouse.poll())
+				{
+					while (mouseEventQueue.getNextEvent(mouseEvent))
+					{
+						// if the aim button has been pressed
+						if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.RIGHT))
+						{
+							
+							if (mouseEvent.getValue() == 1.0f) // we want to be holding the key currently
+							{
+								aiming = true;
+								
+							}
+							else // we are not holding shift currently
+							{
+								synchronized (lock)
+								{
+									aiming = false;
+									lock.notify(); // wake the thread
+								}
+							}
+						}
+						// if the fire button has been pressed
+						else if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.LEFT))
+						{
+							
+							if (mouseEvent.getValue() == 1.0f) // we want to be holding the key currently
+							{
+								firing = true;
+								
+							}
+							else // we are not holding shift currently
+							{
+								synchronized (lock)
+								{
+									firing = false;
+									lock.notify(); // wake the thread
+								}
+							}
+						}
+					}
+					
+					try
+					{
+						Thread.sleep(POLLING_DELAY);
+					}
+					catch (InterruptedException e)
+					{
+						e.printStackTrace();
+						return;
+					}
+				}
 			}
-			catch (InterruptedException e)
-			{}
-		}
+		};
+		mouseThread.start();
+		
 	}
+		
+		
 	
 	private void initializeJInput()
 	{
@@ -187,11 +283,30 @@ public class ToggleShift
 					break;
 				}
 			}
+			else if (controllers[i].getType().equals(Controller.Type.MOUSE))
+			{
+				if (mouse == null)
+					mouse = controllers[i];
+				else
+				{
+					System.err.println("Multiple mice detected");
+					break;
+				}
+			}
 		}
 		
 		if (keyboard == null)
 		{
 			System.err.println("No keyboards detected");
 		}
+	}
+	
+	/**
+	 * The action to take after this iteration
+	 */
+	enum Action {
+		/** */
+		PRESS,
+		RELEASE
 	}
 }
