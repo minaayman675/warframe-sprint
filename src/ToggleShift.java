@@ -202,7 +202,6 @@ public class ToggleShift
 							if (mouseEvent.getValue() == 1.0f) // we want to be holding the key currently
 							{
 								firing = true;
-								
 							}
 							else // we are not holding shift currently
 							{
