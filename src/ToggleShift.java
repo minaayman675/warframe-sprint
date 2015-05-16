@@ -37,6 +37,8 @@ public class ToggleShift
 	
 	private volatile boolean firing;
 	
+	private volatile boolean running;
+	
 	private Object lock;
 	private Robot robot;
 	
@@ -60,6 +62,7 @@ public class ToggleShift
 		desiredState = false;
 		aiming = false;
 		firing = false;
+		running = true;
 		
 		lock = new Object();
 		robot = new Robot();
@@ -77,7 +80,7 @@ public class ToggleShift
 			{
 				boolean pressed = false;
 				
-				while (true)
+				while (running)
 				{
 					synchronized(lock)
 					{
@@ -92,7 +95,7 @@ public class ToggleShift
 						}
 					}
 						
-					while (desiredState && !aiming && !firing)
+					while (running && desiredState && !aiming && !firing)
 					{
 						robot.keyRelease(KEY_CODE);
 						robot.keyPress(KEY_CODE);
@@ -131,7 +134,7 @@ public class ToggleShift
 			@Override
 			public void run()
 			{
-				while (keyboard.poll())
+				while (running && keyboard.poll())
 				{
 					while (keyboardEventQueue.getNextEvent(keyboardEvent))
 					{
@@ -174,7 +177,7 @@ public class ToggleShift
 			@Override
 			public void run()
 			{
-				while (mouse.poll())
+				while (running && mouse.poll())
 				{
 					while (mouseEventQueue.getNextEvent(mouseEvent))
 					{
@@ -182,12 +185,12 @@ public class ToggleShift
 						if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.RIGHT))
 						{
 							
-							if (mouseEvent.getValue() == 1.0f) // we want to be holding the key currently
+							if (mouseEvent.getValue() == 1.0f) // m2 was just pressed
 							{
 								aiming = true;
 								
 							}
-							else // we are not holding shift currently
+							else // m2 was just released
 							{
 								synchronized (lock)
 								{
@@ -200,11 +203,11 @@ public class ToggleShift
 						else if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.LEFT))
 						{
 							
-							if (mouseEvent.getValue() == 1.0f) // we want to be holding the key currently
+							if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
 							{
 								firing = true;
 							}
-							else // we are not holding shift currently
+							else // m1 was just released
 							{
 								synchronized (lock)
 								{
@@ -229,6 +232,19 @@ public class ToggleShift
 		};
 		mouseThread.start();
 		
+		
+//		Runtime.getRuntime().addShutdownHook(new Thread() {
+//			@Override
+//			public void run()
+//			{
+//				running = false;
+//				
+//				synchronized (lock)
+//				{
+//					lock.notifyAll();
+//				}
+//			}
+//		});
 	}
 		
 		
