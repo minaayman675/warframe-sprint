@@ -11,6 +11,12 @@ import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.Event;
 import net.java.games.input.EventQueue;
 
+/* TODO:
+ * crouch fix (see below)
+ * hotkey to temporarily pause operation (so i can type)
+ * Do I only need to sprint while WASD is being pressed?
+ * hotkey to exit the program
+ */
 
 public class ToggleShift
 {
@@ -44,6 +50,8 @@ public class ToggleShift
 	private Controller keyboard;
 	private Controller mouse;
 	
+	private static int threadID = 0;
+	
 	public static void main(String[] args)
 	{
 		try
@@ -71,165 +79,9 @@ public class ToggleShift
 	
 	public void run()
 	{
-		
-		Thread spamThread = new Thread("spam thread"){
-
-			@Override
-			public void run()
-			{
-				boolean pressed = false;
-				
-				while (running)
-				{
-					synchronized(lock)
-					{
-						try
-						{
-							lock.wait();
-						}
-						catch (InterruptedException e)
-						{
-							e.printStackTrace();
-							return;
-						}
-					}
-						
-					while (running && desiredState && !aiming && !firing)
-					{
-						robot.keyRelease(KEY_CODE);
-						robot.keyPress(KEY_CODE);
-						pressed = true;
-						try
-						{
-							Thread.sleep(REPEAT_DELAY);
-						}
-						catch (InterruptedException e)
-						{
-							e.printStackTrace();
-							return;
-						}
-					}
-					
-					if (pressed)
-					{
-						robot.keyRelease(KEY_CODE);
-						pressed = false;
-					}
-				}
-			}
-		};
-		spamThread.start();
-		
-		final EventQueue keyboardEventQueue = keyboard.getEventQueue();
-		final Event keyboardEvent = new Event();
-		
-		final EventQueue mouseEventQueue = mouse.getEventQueue();
-		final Event mouseEvent = new Event();
-		
-		//final Component mouseLeft = mouse.getComponent(Component.Identifier.Button.LEFT);
-		//final Component mouseRight = mouse.getComponent(Component.Identifier.Button.RIGHT);
-		
-		Thread keyboadThread = new Thread("keyboard thread") {
-			@Override
-			public void run()
-			{
-				while (running && keyboard.poll())
-				{
-					while (keyboardEventQueue.getNextEvent(keyboardEvent))
-					{
-						// if the toggle key has been pressed
-						if ( keyboardEvent.getComponent().getIdentifier().equals(Component.Identifier.Key.LSHIFT)
-								&& keyboardEvent.getValue() == 1.0f )
-						{
-							
-							if (desiredState) // we want to be holding the key currently
-							{
-								desiredState = false; // signal our thread to release the key
-								
-							}
-							else // we are not holding shift currently
-							{
-								synchronized (lock)
-								{
-									desiredState = true; // signal our thread to hold the key
-									lock.notify(); // wake the thread
-								}
-							}
-						}
-					}
-					
-					try
-					{
-						Thread.sleep(POLLING_DELAY);
-					}
-					catch (InterruptedException e)
-					{
-						e.printStackTrace();
-						return;
-					}
-				}
-			}
-		};
-		keyboadThread.start();
-		
-		Thread mouseThread = new Thread("mouse thread") {
-			@Override
-			public void run()
-			{
-				while (running && mouse.poll())
-				{
-					while (mouseEventQueue.getNextEvent(mouseEvent))
-					{
-						// if the aim button has been pressed
-						if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.RIGHT))
-						{
-							
-							if (mouseEvent.getValue() == 1.0f) // m2 was just pressed
-							{
-								aiming = true;
-								
-							}
-							else // m2 was just released
-							{
-								synchronized (lock)
-								{
-									aiming = false;
-									lock.notify(); // wake the thread
-								}
-							}
-						}
-						// if the fire button has been pressed
-						else if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.LEFT))
-						{
-							
-							if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
-							{
-								firing = true;
-							}
-							else // m1 was just released
-							{
-								synchronized (lock)
-								{
-									firing = false;
-									lock.notify(); // wake the thread
-								}
-							}
-						}
-					}
-					
-					try
-					{
-						Thread.sleep(POLLING_DELAY);
-					}
-					catch (InterruptedException e)
-					{
-						e.printStackTrace();
-						return;
-					}
-				}
-			}
-		};
-		mouseThread.start();
+		new     SpamThread("spam thread "     + threadID++).start();
+		new KeyboardThread("keyboard thread " + threadID++).start();
+		new    MouseThread("mouse thread "    + threadID++).start();
 		
 		
 //		Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -316,12 +168,177 @@ public class ToggleShift
 		}
 	}
 	
-	/**
-	 * The action to take after this iteration
-	 */
-	enum Action {
-		/** */
-		PRESS,
-		RELEASE
+	private class SpamThread extends Thread
+	{
+		SpamThread(String name)
+		{
+			super(name);
+		}
+		
+		@Override
+		public void run()
+		{
+			boolean pressed = false;
+			
+			while (running)
+			{
+				synchronized(lock)
+				{
+					try
+					{
+						lock.wait();
+					}
+					catch (InterruptedException e)
+					{
+						e.printStackTrace();
+						return;
+					}
+				}
+					
+				while (running && desiredState && !aiming && !firing)
+				{
+					robot.keyRelease(KEY_CODE);
+					robot.keyPress(KEY_CODE);
+					pressed = true;
+					try
+					{
+						Thread.sleep(REPEAT_DELAY);
+					}
+					catch (InterruptedException e)
+					{
+						e.printStackTrace();
+						return;
+					}
+				}
+				
+				if (pressed)
+				{
+					robot.keyRelease(KEY_CODE);
+					pressed = false;
+				}
+			}
+		}
+	}
+	
+	private class KeyboardThread extends Thread
+	{
+		KeyboardThread(String name)
+		{
+			super(name);
+		}
+		
+		@Override
+		public void run()
+		{
+			final EventQueue keyboardEventQueue = keyboard.getEventQueue();
+			final Event keyboardEvent = new Event();
+			
+			while (running && keyboard.poll())
+			{
+				while (keyboardEventQueue.getNextEvent(keyboardEvent))
+				{
+					// if the toggle key has been pressed
+					if ( keyboardEvent.getComponent().getIdentifier().equals(Component.Identifier.Key.LSHIFT)
+							&& keyboardEvent.getValue() == 1.0f )
+					{
+						
+						if (desiredState) // we want to be holding the key currently
+						{
+							desiredState = false; // signal our thread to release the key
+							
+						}
+						else // we are not holding shift currently
+						{
+							synchronized (lock)
+							{
+								desiredState = true; // signal our thread to hold the key
+								lock.notify(); // wake the thread
+							}
+						}
+					}
+					
+					/* TODO:
+					 * if alt is depressed when WASD and space is not pressed, disable sprinting until alt is released
+					 */
+				}
+				
+				try
+				{
+					Thread.sleep(POLLING_DELAY);
+				}
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+					return;
+				}
+			}
+		}
+	}
+	
+	private class MouseThread extends Thread
+	{
+		MouseThread(String name)
+		{
+			super(name);
+		}
+		
+		@Override
+		public void run()
+		{
+			final EventQueue mouseEventQueue = mouse.getEventQueue();
+			final Event mouseEvent = new Event();
+			
+			while (running && mouse.poll())
+			{
+				while (mouseEventQueue.getNextEvent(mouseEvent))
+				{
+					// if the aim button has been pressed
+					if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.RIGHT))
+					{
+						
+						if (mouseEvent.getValue() == 1.0f) // m2 was just pressed
+						{
+							aiming = true;
+							
+						}
+						else // m2 was just released
+						{
+							synchronized (lock)
+							{
+								aiming = false;
+								lock.notify(); // wake the thread
+							}
+						}
+					}
+					// if the fire button has been pressed
+					else if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.LEFT))
+					{
+						
+						if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
+						{
+							firing = true;
+						}
+						else // m1 was just released
+						{
+							synchronized (lock)
+							{
+								firing = false;
+								lock.notify(); // wake the thread
+							}
+						}
+					}
+				}
+				
+				try
+				{
+					Thread.sleep(POLLING_DELAY);
+				}
+				catch (InterruptedException e)
+				{
+					e.printStackTrace();
+					return;
+				}
+			}
+		}
 	}
 }
