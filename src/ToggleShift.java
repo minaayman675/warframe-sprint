@@ -14,6 +14,9 @@ import net.java.games.input.EventQueue;
 
 public class ToggleShift
 {
+	private final int KEY_CODE = KeyEvent.VK_CLOSE_BRACKET;
+	private final long REPEAT_DELAY  = 200;
+	private final long POLLING_DELAY =  20;
 	
 	private static final String[] LIBRARIES = {
 		"jinput-dx8.dll",
@@ -25,10 +28,6 @@ public class ToggleShift
 		"libjinput-linux64.so",
 		"libjinput-osx.jnilib"
 	};
-	
-	private final int KEY_CODE = KeyEvent.VK_CLOSE_BRACKET;
-	private final long REPEAT_DELAY  = 200;
-	private final long POLLING_DELAY =  20;
 	
 	/** <code>true</code> if we want to be holding the key */
 	private volatile boolean desiredState;
