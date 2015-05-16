@@ -27,7 +27,7 @@ public class ToggleShift
 	};
 	
 	private final int KEY_CODE = KeyEvent.VK_CLOSE_BRACKET;
-	private final long REPEAT_DELAY  = 100;
+	private final long REPEAT_DELAY  = 200;
 	private final long POLLING_DELAY =  20;
 	
 	/** <code>true</code> if we want to be holding the key */
@@ -91,9 +91,10 @@ public class ToggleShift
 							return;
 						}
 					}
-					
+						
 					while (desiredState && !aiming && !firing)
 					{
+						robot.keyRelease(KEY_CODE);
 						robot.keyPress(KEY_CODE);
 						pressed = true;
 						try
