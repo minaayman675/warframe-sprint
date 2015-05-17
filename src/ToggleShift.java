@@ -184,14 +184,17 @@ public class ToggleShift
 			{
 				synchronized(lock)
 				{
-					try
+					if (running && (!desiredState || aiming || firing)) // avoid race condition
 					{
-						lock.wait();
-					}
-					catch (InterruptedException e)
-					{
-						e.printStackTrace();
-						return;
+						try
+						{
+							lock.wait();
+						}
+						catch (InterruptedException e)
+						{
+							e.printStackTrace();
+							return;
+						}
 					}
 				}
 					
