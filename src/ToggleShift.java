@@ -193,7 +193,7 @@ public class ToggleShift
 						catch (InterruptedException e)
 						{
 							e.printStackTrace();
-							return;
+							System.exit(1);
 						}
 					}
 				}
@@ -210,7 +210,7 @@ public class ToggleShift
 					catch (InterruptedException e)
 					{
 						e.printStackTrace();
-						return;
+						System.exit(1);
 					}
 				}
 				
@@ -272,7 +272,7 @@ public class ToggleShift
 				catch (InterruptedException e)
 				{
 					e.printStackTrace();
-					return;
+					System.exit(1);
 				}
 			}
 		}
@@ -339,7 +339,7 @@ public class ToggleShift
 				catch (InterruptedException e)
 				{
 					e.printStackTrace();
-					return;
+					System.exit(1);
 				}
 			}
 		}
