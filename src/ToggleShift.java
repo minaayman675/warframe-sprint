@@ -42,6 +42,8 @@ public class ToggleShift
 	
 	private volatile boolean firing;
 	
+	private volatile boolean firingSpam;
+	
 	private volatile boolean running;
 	
 	private Object lock;
@@ -69,6 +71,7 @@ public class ToggleShift
 		desiredState = false;
 		aiming = false;
 		firing = false;
+		firingSpam = false;
 		running = true;
 		
 		lock = new Object();
