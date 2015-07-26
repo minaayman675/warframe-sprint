@@ -1,5 +1,6 @@
 import java.awt.AWTException;
 import java.awt.Robot;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -20,9 +21,11 @@ import net.java.games.input.EventQueue;
 
 public class ToggleShift
 {
-	private final int KEY_CODE = KeyEvent.VK_CLOSE_BRACKET;
-	private final long REPEAT_DELAY  = 200;
-	private final long POLLING_DELAY =  20;
+	private final static int KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET;
+	private final static int KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK;
+	private final static long SPRINT_REPEAT_DELAY  = 200;
+	private final static long FIRE_REPEAT_DELAY  = 20;
+	private final static long POLLING_DELAY =  20;
 	
 	private static final String[] LIBRARIES = {
 		"jinput-dx8.dll",
@@ -46,7 +49,8 @@ public class ToggleShift
 	
 	private volatile boolean running = true;
 	
-	private Object lock = new Object();
+	private Object sprintSpamLock = new Object();
+	private Object firingSpamLock = new Object();
 	private Robot robot; // Must be initialized in constructor due to Exceptions
 	
 	private Controller keyboard;
@@ -74,10 +78,13 @@ public class ToggleShift
 	
 	public void run()
 	{
-		new     SpamThread("spam thread "     + threadID++).start();
-		new KeyboardThread("keyboard thread " + threadID++).start();
-		new    MouseThread("mouse thread "    + threadID++).start();
+		new SprintSpamThread("sprint spam thread " + threadID++).start();
+		new FiringSpamThread("firing spam thread " + threadID++).start();
+		new   KeyboardThread("keyboard thread "    + threadID++).start();
+		new      MouseThread("mouse thread "       + threadID++).start();
 		
+		// Print mouse components:
+		//Arrays.stream(mouse.getComponents()).forEach(c -> System.out.println(c.getIdentifier().getName()));
 		
 //		Runtime.getRuntime().addShutdownHook(new Thread() {
 //			@Override
@@ -85,9 +92,9 @@ public class ToggleShift
 //			{
 //				running = false;
 //				
-//				synchronized (lock)
+//				synchronized (sprintSpamLock)
 //				{
-//					lock.notifyAll();
+//					sprintSpamLock.notifyAll();
 //				}
 //			}
 //		});
@@ -163,9 +170,9 @@ public class ToggleShift
 		}
 	}
 	
-	private class SpamThread extends Thread
+	private class SprintSpamThread extends Thread
 	{
-		SpamThread(String name)
+		SprintSpamThread(String name)
 		{
 			super(name);
 		}
@@ -177,13 +184,78 @@ public class ToggleShift
 			
 			while (running)
 			{
-				synchronized(lock)
+				synchronized(sprintSpamLock)
 				{
-					if (running && (!desiredState || aiming || firing)) // avoid race condition
+					// if we need to not be sprinting
+					if (running && (!desiredState || aiming || firing))
 					{
 						try
 						{
-							lock.wait();
+							sprintSpamLock.wait();
+						}
+						catch (InterruptedException e)
+						{
+							e.printStackTrace();
+							System.exit(1);
+						}
+					}
+				}
+				
+				// while we need to be sprinting
+				while (running && desiredState && !aiming && !firing)
+				{
+					robot.keyRelease(KEYCODE_SPRINT);
+					robot.keyPress(KEYCODE_SPRINT);
+					pressed = true;
+					try
+					{
+						Thread.sleep(SPRINT_REPEAT_DELAY);
+					}
+					catch (InterruptedException e)
+					{
+						e.printStackTrace();
+						System.exit(1);
+					}
+				}
+				
+				// if we simulated a press at some point, release the button
+				if (pressed)
+				{
+					robot.keyRelease(KEYCODE_SPRINT);
+					pressed = false;
+				}
+			}
+		}
+	}
+	
+	private class FiringSpamThread extends Thread
+	{
+		FiringSpamThread(String name)
+		{
+			super(name);
+		}
+		
+		@Override
+		public void run()
+		{
+			boolean pressed = false;
+			
+			while (running)
+			{
+				synchronized(firingSpamLock)
+				{
+					// if we need to not be spamming fire
+					if (running && !firingSpam)
+					{
+						try
+						{
+							synchronized (sprintSpamLock)
+							{
+								firing = false;
+								sprintSpamLock.notify(); // wake the thread
+							}
+							
+							firingSpamLock.wait();
 						}
 						catch (InterruptedException e)
 						{
@@ -193,14 +265,16 @@ public class ToggleShift
 					}
 				}
 					
-				while (running && desiredState && !aiming && !firing)
+				// while we need to be spamming fire
+				while (running && firingSpam)
 				{
-					robot.keyRelease(KEY_CODE);
-					robot.keyPress(KEY_CODE);
+					firing = true;
+					robot.mousePress(KEYCODE_FIRE);
+					robot.mouseRelease(KEYCODE_FIRE);
 					pressed = true;
 					try
 					{
-						Thread.sleep(REPEAT_DELAY);
+						Thread.sleep(FIRE_REPEAT_DELAY);
 					}
 					catch (InterruptedException e)
 					{
@@ -209,9 +283,10 @@ public class ToggleShift
 					}
 				}
 				
+				// if we simulated a press at some point, release the button
 				if (pressed)
 				{
-					robot.keyRelease(KEY_CODE);
+					robot.mouseRelease(KEYCODE_FIRE);
 					pressed = false;
 				}
 			}
@@ -247,10 +322,10 @@ public class ToggleShift
 						}
 						else // we are not holding shift currently
 						{
-							synchronized (lock)
+							synchronized (sprintSpamLock)
 							{
 								desiredState = true; // signal our thread to hold the key
-								lock.notify(); // wake the thread
+								sprintSpamLock.notify(); // wake the thread
 							}
 						}
 					}
@@ -301,15 +376,15 @@ public class ToggleShift
 						}
 						else // m2 was just released
 						{
-							synchronized (lock)
+							synchronized (sprintSpamLock)
 							{
 								aiming = false;
-								lock.notify(); // wake the thread
+								sprintSpamLock.notify(); // wake the thread
 							}
 						}
 					}
 					// if the fire button has been pressed
-					else if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.LEFT))
+					else if (!firingSpam && mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.LEFT))
 					{
 						
 						if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
@@ -318,11 +393,27 @@ public class ToggleShift
 						}
 						else // m1 was just released
 						{
-							synchronized (lock)
+							synchronized (sprintSpamLock)
 							{
 								firing = false;
-								lock.notify(); // wake the thread
+								sprintSpamLock.notify(); // wake the thread
 							}
+						}
+					}
+					// if the spam fire button has been pressed
+					else if (mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button._3))
+					{
+						if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
+						{	
+							synchronized (firingSpamLock)
+							{
+								firingSpam = true;
+								firingSpamLock.notify(); // wake the thread
+							}
+						}
+						else // m4 was just released
+						{
+							firingSpam = false;
 						}
 					}
 				}
