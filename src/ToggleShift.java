@@ -36,18 +36,18 @@ public class ToggleShift
 	};
 	
 	/** <code>true</code> if we want to be holding the key */
-	private volatile boolean desiredState;
+	private volatile boolean desiredState = false;
 	
-	private volatile boolean aiming;
+	private volatile boolean aiming = false;
 	
-	private volatile boolean firing;
+	private volatile boolean firing = false;
 	
-	private volatile boolean firingSpam;
+	private volatile boolean firingSpam = false;
 	
-	private volatile boolean running;
+	private volatile boolean running = true;
 	
-	private Object lock;
-	private Robot robot;
+	private Object lock = new Object();
+	private Robot robot; // Must be initialized in constructor due to Exceptions
 	
 	private Controller keyboard;
 	private Controller mouse;
@@ -68,15 +68,7 @@ public class ToggleShift
 	
 	public ToggleShift() throws AWTException
 	{
-		desiredState = false;
-		aiming = false;
-		firing = false;
-		firingSpam = false;
-		running = true;
-		
-		lock = new Object();
 		robot = new Robot();
-		
 		initializeJInput();
 	}
 	
