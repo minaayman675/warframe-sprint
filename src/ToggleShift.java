@@ -23,7 +23,7 @@ import net.java.games.input.EventQueue;
 public class ToggleShift
 {
 	private final static Identifier IDENTIFIER_SPAMFIRE = Identifier.Button._4;
-	private final static Identifier IDENTIFIER_TOGGLESPRINT = Identifier.Key.LSHIFT;
+	private final static Identifier IDENTIFIER_TOGGLESPRINT = Identifier.Key.LCONTROL;
 	
 	private final static int KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET;
 	private final static int KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK;
