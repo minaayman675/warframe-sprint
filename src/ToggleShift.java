@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 
 import util.UtilFile;
-import net.java.games.input.Component;
 import net.java.games.input.Component.Identifier;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
@@ -46,12 +45,10 @@ public class ToggleShift
 	private volatile boolean desiredState = false;
 	
 	private volatile boolean aiming = false;
-	
 	private volatile boolean firing = false;
-	
 	private volatile boolean firingSpam = false;
-	
 	private volatile boolean running = true;
+	private volatile boolean crouching = false;
 	
 	private Object sprintSpamLock = new Object();
 	private Object firingSpamLock = new Object();
@@ -191,7 +188,7 @@ public class ToggleShift
 				synchronized(sprintSpamLock)
 				{
 					// if we need to not be sprinting
-					if (running && (!desiredState || aiming || firing))
+					if (running && (!desiredState || aiming || firing || crouching))
 					{
 						try
 						{
@@ -206,7 +203,7 @@ public class ToggleShift
 				}
 				
 				// while we need to be sprinting
-				while (running && desiredState && !aiming && !firing)
+				while (running && desiredState && !aiming && !firing && !crouching)
 				{
 					robot.keyRelease(KEYCODE_SPRINT);
 					robot.keyPress(KEYCODE_SPRINT);
@@ -333,10 +330,19 @@ public class ToggleShift
 							}
 						}
 					}
-					
-					/* TODO:
-					 * if alt is depressed when WASD and space is not pressed, disable sprinting until alt is released
-					 */
+					else if (keyboardEvent.getComponent().getIdentifier().equals(Identifier.Key.LSHIFT))
+					{
+						// if we just pressed crouch
+						if (keyboardEvent.getValue() == 1.0f)
+						{
+							crouching = true;
+						}
+						else
+						{
+							crouching = false;
+							sprintSpamLock.notify(); // wake the thread
+						}
+					}
 				}
 				
 				try
@@ -370,7 +376,7 @@ public class ToggleShift
 				while (mouseEventQueue.getNextEvent(mouseEvent))
 				{
 					// if the aim button has been pressed
-					if ( mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.RIGHT))
+					if ( mouseEvent.getComponent().getIdentifier().equals(Identifier.Button.RIGHT))
 					{
 						
 						if (mouseEvent.getValue() == 1.0f) // m2 was just pressed
@@ -388,7 +394,7 @@ public class ToggleShift
 						}
 					}
 					// if the fire button has been pressed
-					else if (!firingSpam && mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button.LEFT))
+					else if (!firingSpam && mouseEvent.getComponent().getIdentifier().equals(Identifier.Button.LEFT))
 					{
 						
 						if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
