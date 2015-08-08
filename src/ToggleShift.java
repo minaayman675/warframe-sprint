@@ -339,8 +339,11 @@ public class ToggleShift
 						}
 						else
 						{
-							crouching = false;
-							sprintSpamLock.notify(); // wake the thread
+							synchronized (sprintSpamLock)
+							{
+								crouching = false;
+								sprintSpamLock.notify(); // wake the thread
+							}
 						}
 					}
 				}
