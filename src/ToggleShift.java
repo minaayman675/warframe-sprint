@@ -7,10 +7,11 @@ import java.io.IOException;
 
 import util.UtilFile;
 import net.java.games.input.Component;
+import net.java.games.input.Component.Identifier;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.Event;
-import net.java.games.input.EventQueue;
+import net.java.games.input.EventQueue; 
 
 /* TODO:
  * crouch fix (see below)
@@ -21,6 +22,9 @@ import net.java.games.input.EventQueue;
 
 public class ToggleShift
 {
+	private final static Identifier IDENTIFIER_SPAMFIRE = Identifier.Button._4;
+	private final static Identifier IDENTIFIER_TOGGLESPRINT = Identifier.Key.LSHIFT;
+	
 	private final static int KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET;
 	private final static int KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK;
 	private final static long SPRINT_REPEAT_DELAY  = 200;
@@ -311,7 +315,7 @@ public class ToggleShift
 				while (keyboardEventQueue.getNextEvent(keyboardEvent))
 				{
 					// if the toggle key has been pressed
-					if ( keyboardEvent.getComponent().getIdentifier().equals(Component.Identifier.Key.LSHIFT)
+					if ( keyboardEvent.getComponent().getIdentifier().equals(IDENTIFIER_TOGGLESPRINT)
 							&& keyboardEvent.getValue() == 1.0f )
 					{
 						
@@ -401,7 +405,7 @@ public class ToggleShift
 						}
 					}
 					// if the spam fire button has been pressed
-					else if (mouseEvent.getComponent().getIdentifier().equals(Component.Identifier.Button._3))
+					else if (mouseEvent.getComponent().getIdentifier().equals(IDENTIFIER_SPAMFIRE))
 					{
 						if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
 						{	
