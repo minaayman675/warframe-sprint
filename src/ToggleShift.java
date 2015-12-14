@@ -23,6 +23,7 @@ public class ToggleShift
 {
 	private final static Identifier IDENTIFIER_SPAMFIRE = Identifier.Button._4;
 	private final static Identifier IDENTIFIER_TOGGLESPRINT = Identifier.Key.LCONTROL;
+	private final static Identifier IDENTIFIER_STOPSPRINTING = Identifier.Key.Y;
 	
 	private final static int KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET;
 	private final static int KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK;
@@ -306,20 +307,20 @@ public class ToggleShift
 		{
 			final EventQueue keyboardEventQueue = keyboard.getEventQueue();
 			final Event keyboardEvent = new Event();
+			Identifier pressedKey;
 			
 			while (running && keyboard.poll())
 			{
 				while (keyboardEventQueue.getNextEvent(keyboardEvent))
 				{
+					pressedKey = keyboardEvent.getComponent().getIdentifier();
+					
 					// if the toggle key has been pressed
-					if ( keyboardEvent.getComponent().getIdentifier().equals(IDENTIFIER_TOGGLESPRINT)
-							&& keyboardEvent.getValue() == 1.0f )
+					if (pressedKey.equals(IDENTIFIER_TOGGLESPRINT) && keyboardEvent.getValue() == 1.0f)
 					{
-						
 						if (desiredState) // we want to be holding the key currently
 						{
 							desiredState = false; // signal our thread to release the key
-							
 						}
 						else // we are not holding shift currently
 						{
@@ -330,7 +331,7 @@ public class ToggleShift
 							}
 						}
 					}
-					else if (keyboardEvent.getComponent().getIdentifier().equals(Identifier.Key.LSHIFT))
+					else if (pressedKey.equals(Identifier.Key.LSHIFT))
 					{
 						// if we just pressed crouch
 						if (keyboardEvent.getValue() == 1.0f)
@@ -345,6 +346,10 @@ public class ToggleShift
 								sprintSpamLock.notify(); // wake the thread
 							}
 						}
+					}
+					else if (pressedKey.equals(IDENTIFIER_STOPSPRINTING))
+					{
+						desiredState = false; // signal our thread to release the key
 					}
 				}
 				
@@ -373,19 +378,20 @@ public class ToggleShift
 		{
 			final EventQueue mouseEventQueue = mouse.getEventQueue();
 			final Event mouseEvent = new Event();
+			Identifier pressedButton;
 			
 			while (running && mouse.poll())
 			{
 				while (mouseEventQueue.getNextEvent(mouseEvent))
 				{
+					pressedButton = mouseEvent.getComponent().getIdentifier();
+					
 					// if the aim button has been pressed
-					if ( mouseEvent.getComponent().getIdentifier().equals(Identifier.Button.RIGHT))
+					if (pressedButton.equals(Identifier.Button.RIGHT))
 					{
-						
 						if (mouseEvent.getValue() == 1.0f) // m2 was just pressed
 						{
 							aiming = true;
-							
 						}
 						else // m2 was just released
 						{
@@ -397,7 +403,7 @@ public class ToggleShift
 						}
 					}
 					// if the fire button has been pressed
-					else if (!firingSpam && mouseEvent.getComponent().getIdentifier().equals(Identifier.Button.LEFT))
+					else if (!firingSpam && pressedButton.equals(Identifier.Button.LEFT))
 					{
 						
 						if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
@@ -414,7 +420,7 @@ public class ToggleShift
 						}
 					}
 					// if the spam fire button has been pressed
-					else if (mouseEvent.getComponent().getIdentifier().equals(IDENTIFIER_SPAMFIRE))
+					else if (pressedButton.equals(IDENTIFIER_SPAMFIRE))
 					{
 						if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
 						{	
