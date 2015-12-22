@@ -21,15 +21,26 @@ import net.java.games.input.EventQueue;
 
 public class ToggleShift
 {
-	private final static Identifier IDENTIFIER_SPAMFIRE = Identifier.Button._4;
-	private final static Identifier IDENTIFIER_TOGGLESPRINT = Identifier.Key.LCONTROL;
-	private final static Identifier IDENTIFIER_STOPSPRINTING = Identifier.Key.Y;
+	// JInput Identifiers
+	private final static Identifier
+		IDENTIFIER_SPAMFIRE = Identifier.Button._4,
+		IDENTIFIER_TOGGLESPRINT = Identifier.Key.LCONTROL,
+		IDENTIFIER_STOPSPRINTING = Identifier.Key.Y,
+		IDENTIFIER_AIM = Identifier.Button.RIGHT,
+		IDENTIFIER_FIRE = Identifier.Button.LEFT,
+		IDENTIFIER_CROUCH = Identifier.Key.LSHIFT;
 	
-	private final static int KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET;
-	private final static int KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK;
-	private final static long SPRINT_REPEAT_DELAY  = 200;
-	private final static long FIRE_REPEAT_DELAY  = 20;
-	private final static long POLLING_DELAY =  20;
+	// AWT key codes
+	private final static int
+		KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET,
+		KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK,
+		KEYCODE_AIM = InputEvent.BUTTON2_DOWN_MASK;
+	
+	// delays
+	private final static long
+		SPRINT_REPEAT_DELAY  = 200,
+		FIRE_REPEAT_DELAY  = 20,
+		POLLING_DELAY =  20;
 	
 	private static final String[] LIBRARIES = {
 		"jinput-dx8.dll",
@@ -331,7 +342,7 @@ public class ToggleShift
 							}
 						}
 					}
-					else if (pressedKey.equals(Identifier.Key.LSHIFT))
+					else if (pressedKey.equals(IDENTIFIER_CROUCH))
 					{
 						// if we just pressed crouch
 						if (keyboardEvent.getValue() == 1.0f)
@@ -387,7 +398,7 @@ public class ToggleShift
 					pressedButton = mouseEvent.getComponent().getIdentifier();
 					
 					// if the aim button has been pressed
-					if (pressedButton.equals(Identifier.Button.RIGHT))
+					if (pressedButton.equals(IDENTIFIER_AIM))
 					{
 						if (mouseEvent.getValue() == 1.0f) // m2 was just pressed
 						{
@@ -403,7 +414,7 @@ public class ToggleShift
 						}
 					}
 					// if the fire button has been pressed
-					else if (!firingSpam && pressedButton.equals(Identifier.Button.LEFT))
+					else if (!firingSpam && pressedButton.equals(IDENTIFIER_FIRE))
 					{
 						
 						if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
