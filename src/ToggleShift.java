@@ -21,20 +21,20 @@ import net.java.games.input.EventQueue;
 
 public class ToggleShift
 {
-	// JInput Identifiers
+	// JInput Identifiers (used for watching for keypresses)
 	private final static Identifier
 		IDENTIFIER_SPAMFIRE = Identifier.Button._4,
 		IDENTIFIER_TOGGLESPRINT = Identifier.Key.LCONTROL,
 		IDENTIFIER_STOPSPRINTING = Identifier.Key.Y,
-		IDENTIFIER_AIM = Identifier.Button.RIGHT,
-		IDENTIFIER_FIRE = Identifier.Button.LEFT,
+		IDENTIFIER_FIRE = Identifier.Button.LEFT, // must match KEYCODE_FIRE
+		IDENTIFIER_AIM = Identifier.Button.RIGHT, // must match KEYCODE_AIM
 		IDENTIFIER_CROUCH = Identifier.Key.LSHIFT;
 	
-	// AWT key codes
+	// AWT key codes (used for sending fake keypresses)
 	private final static int
 		KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET,
-		KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK,
-		KEYCODE_AIM = InputEvent.BUTTON2_DOWN_MASK;
+		KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK, // must match IDENTIFIER_FIRE
+		KEYCODE_AIM = InputEvent.BUTTON2_DOWN_MASK;  // must match IDENTIFIER_AIM
 	
 	// delays
 	private final static long
@@ -69,6 +69,7 @@ public class ToggleShift
 	private Controller keyboard;
 	private Controller mouse;
 	
+	/** Used to differentiate between different instances of the same type of thread */
 	private static int threadID = 0;
 	
 	public static void main(String[] args)
@@ -222,6 +223,13 @@ public class ToggleShift
 				if (pressed)
 				{
 					robot.keyRelease(KEYCODE_SPRINT);
+					
+					// make sure that we are aiming if we want to be
+					if (aiming)
+					{
+						robot.keyPress(KEYCODE_AIM);
+					}
+					
 					pressed = false;
 				}
 			}
