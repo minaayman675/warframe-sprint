@@ -61,6 +61,7 @@ public class ToggleShift
 	private volatile boolean desiredFiringSpamState = false;
 	private volatile boolean programRunning = true;
 	private volatile boolean crouching = false;
+	private volatile boolean mouseOverridden = false;
 	
 	private Object sprintSpamLock = new Object();
 	private Object firingSpamLock = new Object();
@@ -228,6 +229,12 @@ public class ToggleShift
 					if (aiming)
 					{
 						robot.mousePress(KEYCODE_AIM);
+						mouseOverridden = true;
+					}
+					else if (mouseOverridden)
+					{
+						robot.mouseRelease(KEYCODE_AIM);
+						mouseOverridden = false;
 					}
 					
 					pressed = false;
@@ -355,7 +362,10 @@ public class ToggleShift
 					}
 					else if (pressedKey.equals(IDENTIFIER_STOPSPRINTING))
 					{
-						desiredSprintSpamState = false; // signal our thread to release the key
+						if (keyboardEvent.getValue() == 1.0f)
+						{
+							desiredSprintSpamState = false; // signal our thread to release the key
+						}
 					}
 				}
 				
