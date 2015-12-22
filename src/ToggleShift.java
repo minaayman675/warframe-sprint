@@ -59,7 +59,7 @@ public class ToggleShift
 	private volatile boolean aiming = false;
 	private volatile boolean firing = false;
 	private volatile boolean firingSpam = false;
-	private volatile boolean running = true;
+	private volatile boolean spammingSprint = true;
 	private volatile boolean crouching = false;
 	
 	private Object sprintSpamLock = new Object();
@@ -179,12 +179,12 @@ public class ToggleShift
 		{
 			boolean pressed = false;
 			
-			while (running)
+			while (spammingSprint)
 			{
 				synchronized(sprintSpamLock)
 				{
 					// if we need to not be sprinting
-					if (running && (!desiredState || aiming || firing || crouching))
+					if (spammingSprint && (!desiredState || aiming || firing || crouching))
 					{
 						try
 						{
@@ -199,7 +199,7 @@ public class ToggleShift
 				}
 				
 				// while we need to be sprinting
-				while (running && desiredState && !aiming && !firing && !crouching)
+				while (spammingSprint && desiredState && !aiming && !firing && !crouching)
 				{
 					robot.keyRelease(KEYCODE_SPRINT);
 					robot.keyPress(KEYCODE_SPRINT);
@@ -237,12 +237,12 @@ public class ToggleShift
 		{
 			boolean pressed = false;
 			
-			while (running)
+			while (spammingSprint)
 			{
 				synchronized(firingSpamLock)
 				{
 					// if we need to not be spamming fire
-					if (running && !firingSpam)
+					if (spammingSprint && !firingSpam)
 					{
 						try
 						{
@@ -263,7 +263,7 @@ public class ToggleShift
 				}
 					
 				// while we need to be spamming fire
-				while (running && firingSpam)
+				while (spammingSprint && firingSpam)
 				{
 					firing = true;
 					robot.mousePress(KEYCODE_FIRE);
@@ -304,7 +304,7 @@ public class ToggleShift
 			final Event keyboardEvent = new Event();
 			Identifier pressedKey;
 			
-			while (running && keyboard.poll())
+			while (spammingSprint && keyboard.poll())
 			{
 				while (keyboardEventQueue.getNextEvent(keyboardEvent))
 				{
@@ -375,7 +375,7 @@ public class ToggleShift
 			final Event mouseEvent = new Event();
 			Identifier pressedButton;
 			
-			while (running && mouse.poll())
+			while (spammingSprint && mouse.poll())
 			{
 				while (mouseEventQueue.getNextEvent(mouseEvent))
 				{
