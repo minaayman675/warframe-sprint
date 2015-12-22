@@ -227,7 +227,7 @@ public class ToggleShift
 					// make sure that we are aiming if we want to be
 					if (aiming)
 					{
-						robot.keyPress(KEYCODE_AIM);
+						robot.mousePress(KEYCODE_AIM);
 					}
 					
 					pressed = false;
