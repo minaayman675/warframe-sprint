@@ -54,11 +54,11 @@ public class ToggleShift
 	};
 	
 	/** <code>true</code> if we want to be holding the key */
-	private volatile boolean desiredState = false;
+	private volatile boolean desiredSprintSpamState = false;
 	
 	private volatile boolean aiming = false;
 	private volatile boolean firing = false;
-	private volatile boolean firingSpam = false;
+	private volatile boolean desiredFiringSpamState = false;
 	private volatile boolean programRunning = true;
 	private volatile boolean crouching = false;
 	
@@ -187,7 +187,7 @@ public class ToggleShift
 				synchronized(sprintSpamLock)
 				{
 					// if we need to not be sprinting
-					if (programRunning && (!desiredState || aiming || firing || crouching))
+					if (programRunning && (!desiredSprintSpamState || aiming || firing || crouching))
 					{
 						try
 						{
@@ -202,7 +202,7 @@ public class ToggleShift
 				}
 				
 				// while we need to be sprinting
-				while (programRunning && desiredState && !aiming && !firing && !crouching)
+				while (programRunning && desiredSprintSpamState && !aiming && !firing && !crouching)
 				{
 					robot.keyRelease(KEYCODE_SPRINT);
 					robot.keyPress(KEYCODE_SPRINT);
@@ -245,7 +245,7 @@ public class ToggleShift
 				synchronized(firingSpamLock)
 				{
 					// if we need to not be spamming fire
-					if (programRunning && !firingSpam)
+					if (programRunning && !desiredFiringSpamState)
 					{
 						try
 						{
@@ -266,7 +266,7 @@ public class ToggleShift
 				}
 					
 				// while we need to be spamming fire
-				while (programRunning && firingSpam)
+				while (programRunning && desiredFiringSpamState)
 				{
 					firing = true;
 					robot.mousePress(KEYCODE_FIRE);
@@ -316,15 +316,15 @@ public class ToggleShift
 					// if the toggle key has been pressed
 					if (pressedKey.equals(IDENTIFIER_TOGGLESPRINT) && keyboardEvent.getValue() == 1.0f)
 					{
-						if (desiredState) // we want to be holding the key currently
+						if (desiredSprintSpamState) // we want to be holding the key currently
 						{
-							desiredState = false; // signal our thread to release the key
+							desiredSprintSpamState = false; // signal our thread to release the key
 						}
 						else // we are not holding shift currently
 						{
 							synchronized (sprintSpamLock)
 							{
-								desiredState = true; // signal our thread to hold the key
+								desiredSprintSpamState = true; // signal our thread to hold the key
 								sprintSpamLock.notify(); // wake the thread
 							}
 						}
@@ -347,7 +347,7 @@ public class ToggleShift
 					}
 					else if (pressedKey.equals(IDENTIFIER_STOPSPRINTING))
 					{
-						desiredState = false; // signal our thread to release the key
+						desiredSprintSpamState = false; // signal our thread to release the key
 					}
 				}
 				
@@ -401,7 +401,7 @@ public class ToggleShift
 						}
 					}
 					// if the fire button has been pressed
-					else if (!firingSpam && pressedButton.equals(IDENTIFIER_FIRE))
+					else if (!desiredFiringSpamState && pressedButton.equals(IDENTIFIER_FIRE))
 					{
 						
 						if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
@@ -424,13 +424,13 @@ public class ToggleShift
 						{	
 							synchronized (firingSpamLock)
 							{
-								firingSpam = true;
+								desiredFiringSpamState = true;
 								firingSpamLock.notify(); // wake the thread
 							}
 						}
 						else // m4 was just released
 						{
-							firingSpam = false;
+							desiredFiringSpamState = false;
 						}
 					}
 				}
