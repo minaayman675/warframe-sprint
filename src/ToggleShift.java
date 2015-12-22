@@ -95,22 +95,6 @@ public class ToggleShift
 		new FiringSpamThread("firing spam thread " + threadID++).start();
 		new   KeyboardThread("keyboard thread "    + threadID++).start();
 		new      MouseThread("mouse thread "       + threadID++).start();
-		
-		// Print mouse components:
-		//Arrays.stream(mouse.getComponents()).forEach(c -> System.out.println(c.getIdentifier().getName()));
-		
-//		Runtime.getRuntime().addShutdownHook(new Thread() {
-//			@Override
-//			public void run()
-//			{
-//				running = false;
-//				
-//				synchronized (sprintSpamLock)
-//				{
-//					sprintSpamLock.notifyAll();
-//				}
-//			}
-//		});
 	}
 		
 		
