@@ -59,7 +59,7 @@ public class ToggleShift
 	private volatile boolean aiming = false;
 	private volatile boolean firing = false;
 	private volatile boolean firingSpam = false;
-	private volatile boolean spammingSprint = true;
+	private volatile boolean programRunning = true;
 	private volatile boolean crouching = false;
 	
 	private Object sprintSpamLock = new Object();
@@ -167,6 +167,9 @@ public class ToggleShift
 		}
 	}
 	
+	/*
+	 * This is the thread that actually mashes the sprint button
+	 */
 	private class SprintSpamThread extends Thread
 	{
 		SprintSpamThread(String name)
@@ -179,12 +182,12 @@ public class ToggleShift
 		{
 			boolean pressed = false;
 			
-			while (spammingSprint)
+			while (programRunning)
 			{
 				synchronized(sprintSpamLock)
 				{
 					// if we need to not be sprinting
-					if (spammingSprint && (!desiredState || aiming || firing || crouching))
+					if (programRunning && (!desiredState || aiming || firing || crouching))
 					{
 						try
 						{
@@ -199,7 +202,7 @@ public class ToggleShift
 				}
 				
 				// while we need to be sprinting
-				while (spammingSprint && desiredState && !aiming && !firing && !crouching)
+				while (programRunning && desiredState && !aiming && !firing && !crouching)
 				{
 					robot.keyRelease(KEYCODE_SPRINT);
 					robot.keyPress(KEYCODE_SPRINT);
@@ -237,12 +240,12 @@ public class ToggleShift
 		{
 			boolean pressed = false;
 			
-			while (spammingSprint)
+			while (programRunning)
 			{
 				synchronized(firingSpamLock)
 				{
 					// if we need to not be spamming fire
-					if (spammingSprint && !firingSpam)
+					if (programRunning && !firingSpam)
 					{
 						try
 						{
@@ -263,7 +266,7 @@ public class ToggleShift
 				}
 					
 				// while we need to be spamming fire
-				while (spammingSprint && firingSpam)
+				while (programRunning && firingSpam)
 				{
 					firing = true;
 					robot.mousePress(KEYCODE_FIRE);
@@ -304,7 +307,7 @@ public class ToggleShift
 			final Event keyboardEvent = new Event();
 			Identifier pressedKey;
 			
-			while (spammingSprint && keyboard.poll())
+			while (programRunning && keyboard.poll())
 			{
 				while (keyboardEventQueue.getNextEvent(keyboardEvent))
 				{
@@ -375,7 +378,7 @@ public class ToggleShift
 			final Event mouseEvent = new Event();
 			Identifier pressedButton;
 			
-			while (spammingSprint && mouse.poll())
+			while (programRunning && mouse.poll())
 			{
 				while (mouseEventQueue.getNextEvent(mouseEvent))
 				{
