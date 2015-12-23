@@ -34,7 +34,7 @@ public class ToggleShift
 	private final static int
 		KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET,
 		KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK, // must match IDENTIFIER_FIRE
-		KEYCODE_AIM = InputEvent.BUTTON2_DOWN_MASK;  // must match IDENTIFIER_AIM
+		KEYCODE_AIM = InputEvent.BUTTON3_DOWN_MASK;  // must match IDENTIFIER_AIM
 	
 	// delays
 	private final static long
