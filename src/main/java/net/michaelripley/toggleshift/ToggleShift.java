@@ -187,7 +187,6 @@ public class ToggleShift {
                 while (programRunning && desiredSprintSpamState && !aiming && !firing && !crouching) {
                     robot.keyRelease(KEYCODE_SPRINT);
                     robot.keyPress(KEYCODE_SPRINT);
-                    System.out.println("foo");
                     pressed = true;
                     try {
                         Thread.sleep(SPRINT_REPEAT_DELAY);
