@@ -1,0 +1,1 @@
+@call java8 java -jar AutoClick.jar 2>&1 | tee -a AutoClick.log
