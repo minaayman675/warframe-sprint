@@ -5,12 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.michaelripley</groupId>
-    <artifactId>toggle-shift</artifactId>
+    <artifactId>warframe-sprint</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Toggle Shift</name>
-    <url>https://github.com/zkxs/toggle-shift</url>
+    <name>Warframe Sprint Toggler</name>
+    <url>https://github.com/zkxs/warframe-sprint</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
