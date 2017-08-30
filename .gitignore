@@ -1,0 +1,14 @@
+# Eclipse stuff
+.settings
+.project
+.classpath
+
+# Intellij stuff
+.idea/
+*.iml
+
+# Build output
+/target
+
+# Program output
+*.log
