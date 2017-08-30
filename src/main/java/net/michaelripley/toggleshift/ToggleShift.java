@@ -22,7 +22,7 @@ import java.io.IOException;
 
 public class ToggleShift {
     // JInput Identifiers (used for watching for keypresses)
-    private final static Identifier
+    private static final Identifier
             IDENTIFIER_SPAMFIRE = Identifier.Button._4,
             IDENTIFIER_TOGGLESPRINT = Identifier.Key.LCONTROL,
             IDENTIFIER_STOPSPRINTING = Identifier.Key.Y,
@@ -31,7 +31,7 @@ public class ToggleShift {
             IDENTIFIER_CROUCH = Identifier.Key.LSHIFT;
 
     // AWT key codes (used for sending fake keypresses)
-    private final static int
+    private static final int
             KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET,
             KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK, // must match IDENTIFIER_FIRE
             KEYCODE_AIM = InputEvent.BUTTON3_DOWN_MASK;  // must match IDENTIFIER_AIM
@@ -99,8 +99,8 @@ public class ToggleShift {
 
     private void initializeJInput() {
         // copy libraries into workingdir/lib
-        File workingDir = UtilFile.getWorkingDirectory();
-        File libDir = new File(workingDir, "lib");
+        final File workingDir = UtilFile.getWorkingDirectory();
+        final File libDir = new File(workingDir, "lib");
         try {
             if (!libDir.exists()) {
                 if (!libDir.mkdirs()) {
@@ -110,9 +110,11 @@ public class ToggleShift {
                 }
             }
 
-            for (String library : LIBRARIES) {
-                File newFile = new File(libDir, library);
-                if (!newFile.exists()) UtilFile.streamToFile(UtilFile.getFileInputStream(library), newFile);
+            for (final String library : LIBRARIES) {
+                final File newFile = new File(libDir, library);
+                if (!newFile.exists()) {
+                    UtilFile.streamToFile(UtilFile.getFileInputStream(library), newFile);
+                }
             }
 
         } catch (IOException e) {
@@ -132,21 +134,21 @@ public class ToggleShift {
 
 
         // get all keyboards
-        ControllerEnvironment controllerEnviornment = ControllerEnvironment.getDefaultEnvironment();
-        Controller[] controllers = controllerEnviornment.getControllers();
+        final ControllerEnvironment controllerEnvironment = ControllerEnvironment.getDefaultEnvironment();
+        final Controller[] controllers = controllerEnvironment.getControllers();
 
-        for (Controller controller : controllers) {
+        for (final Controller controller : controllers) {
             if (controller.getType().equals(Controller.Type.KEYBOARD)) {
-                if (keyboard == null)
+                if (keyboard == null) {
                     keyboard = controller;
-                else {
+                } else {
                     System.err.println("Multiple keyboards detected");
                     break;
                 }
             } else if (controller.getType().equals(Controller.Type.MOUSE)) {
-                if (mouse == null)
+                if (mouse == null) {
                     mouse = controller;
-                else {
+                } else {
                     System.err.println("Multiple mice detected");
                     break;
                 }
@@ -282,11 +284,9 @@ public class ToggleShift {
 
                     // if the toggle key has been pressed
                     if (pressedKey.equals(IDENTIFIER_TOGGLESPRINT) && keyboardEvent.getValue() == 1.0f) {
-                        if (desiredSprintSpamState) // we want to be holding the key currently
-                        {
+                        if (desiredSprintSpamState) { // we want to be holding the key currently
                             desiredSprintSpamState = false; // signal our thread to release the key
-                        } else // we are not holding shift currently
-                        {
+                        } else { // we are not holding shift currently
                             synchronized (sprintSpamLock) {
                                 desiredSprintSpamState = true; // signal our thread to hold the key
                                 sprintSpamLock.notify(); // wake the thread
@@ -336,41 +336,30 @@ public class ToggleShift {
 
                     // if the aim button has been pressed
                     if (pressedButton.equals(IDENTIFIER_AIM)) {
-                        if (mouseEvent.getValue() == 1.0f) // m2 was just pressed
-                        {
+                        if (mouseEvent.getValue() == 1.0f) { // m2 was just pressed
                             aiming = true;
-                        } else // m2 was just released
-                        {
+                        } else { // m2 was just released
                             synchronized (sprintSpamLock) {
                                 aiming = false;
                                 sprintSpamLock.notify(); // wake the thread
                             }
                         }
-                    }
-                    // if the fire button has been pressed
-                    else if (!desiredFiringSpamState && pressedButton.equals(IDENTIFIER_FIRE)) {
-
-                        if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
-                        {
+                    } else if (!desiredFiringSpamState && pressedButton.equals(IDENTIFIER_FIRE)) { // if the fire button has been pressed
+                        if (mouseEvent.getValue() == 1.0f) { // m1 was just pressed
                             firing = true;
-                        } else // m1 was just released
-                        {
+                        } else { // m1 was just released
                             synchronized (sprintSpamLock) {
                                 firing = false;
                                 sprintSpamLock.notify(); // wake the thread
                             }
                         }
-                    }
-                    // if the spam fire button has been pressed
-                    else if (pressedButton.equals(IDENTIFIER_SPAMFIRE)) {
-                        if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
-                        {
+                    } else if (pressedButton.equals(IDENTIFIER_SPAMFIRE)) { // if the spam fire button has been pressed
+                        if (mouseEvent.getValue() == 1.0f) { // m1 was just pressed
                             synchronized (firingSpamLock) {
                                 desiredFiringSpamState = true;
                                 firingSpamLock.notify(); // wake the thread
                             }
-                        } else // m4 was just released
-                        {
+                        } else { // m4 was just released
                             desiredFiringSpamState = false;
                         }
                     }
