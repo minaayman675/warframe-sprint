@@ -1,13 +1,14 @@
-# Eclipse stuff
+# Eclipse
 .settings
 .project
 .classpath
+bin/
 
-# Intellij stuff
+# Intellij
 .idea/
 *.iml
 
-# Build output
+# Maven
 /target
 
 # Program output
