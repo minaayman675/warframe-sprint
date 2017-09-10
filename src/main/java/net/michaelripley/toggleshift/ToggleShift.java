@@ -27,6 +27,7 @@ public class ToggleShift {
             IDENTIFIER_TOGGLESPRINT = Identifier.Key.LCONTROL,
             IDENTIFIER_STOPSPRINTING = Identifier.Key.Y,
             IDENTIFIER_FIRE = Identifier.Button.LEFT, // must match KEYCODE_FIRE
+            IDENTIFIER_ALTFIRE = Identifier.Button.MIDDLE,
             IDENTIFIER_AIM = Identifier.Button.RIGHT, // must match KEYCODE_AIM
             IDENTIFIER_CROUCH = Identifier.Key.LSHIFT;
 
@@ -59,6 +60,7 @@ public class ToggleShift {
 
     private volatile boolean aiming = false;
     private volatile boolean firing = false;
+    private volatile boolean altFiring = false;
     private volatile boolean desiredFiringSpamState = false;
     private volatile boolean programRunning = true;
     private volatile boolean crouching = false;
@@ -175,7 +177,7 @@ public class ToggleShift {
             while (programRunning) {
                 synchronized (sprintSpamLock) {
                     // if we need to not be sprinting
-                    if (programRunning && (!desiredSprintSpamState || aiming || firing || crouching)) {
+                    if (programRunning && (!desiredSprintSpamState || aiming || firing || altFiring || crouching)) {
                         try {
                             sprintSpamLock.wait();
                         } catch (InterruptedException e) {
@@ -186,7 +188,7 @@ public class ToggleShift {
                 }
 
                 // while we need to be sprinting
-                while (programRunning && desiredSprintSpamState && !aiming && !firing && !crouching) {
+                while (programRunning && desiredSprintSpamState && !aiming && !firing && !altFiring && !crouching) {
                     robot.keyRelease(KEYCODE_SPRINT);
                     robot.keyPress(KEYCODE_SPRINT);
                     pressed = true;
@@ -341,6 +343,15 @@ public class ToggleShift {
                         } else { // m2 was just released
                             synchronized (sprintSpamLock) {
                                 aiming = false;
+                                sprintSpamLock.notify(); // wake the thread
+                            }
+                        }
+                    } else if (pressedButton.equals(IDENTIFIER_ALTFIRE)) {
+                        if (mouseEvent.getValue() == 1.0f) { // m3 was just pressed
+                            altFiring = true;
+                        } else { // m3 was just released
+                            synchronized (sprintSpamLock) {
+                                altFiring = false;
                                 sprintSpamLock.notify(); // wake the thread
                             }
                         }
