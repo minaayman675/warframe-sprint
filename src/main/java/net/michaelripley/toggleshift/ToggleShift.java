@@ -29,18 +29,23 @@ public class ToggleShift {
             IDENTIFIER_FIRE = Identifier.Button.LEFT, // must match KEYCODE_FIRE
             IDENTIFIER_ALTFIRE = Identifier.Button.MIDDLE,
             IDENTIFIER_AIM = Identifier.Button.RIGHT, // must match KEYCODE_AIM
-            IDENTIFIER_CROUCH = Identifier.Key.LSHIFT;
+            IDENTIFIER_CROUCH = Identifier.Key.LSHIFT,
+            IDENTIFIER_SPINTOWION = Identifier.Key.F9;
 
     // AWT key codes (used for sending fake keypresses)
     private static final int
             KEYCODE_SPRINT = KeyEvent.VK_CLOSE_BRACKET,
             KEYCODE_FIRE = InputEvent.BUTTON1_DOWN_MASK, // must match IDENTIFIER_FIRE
-            KEYCODE_AIM = InputEvent.BUTTON3_DOWN_MASK;  // must match IDENTIFIER_AIM
+            KEYCODE_AIM = InputEvent.BUTTON3_DOWN_MASK,  // must match IDENTIFIER_AIM
+            KEYCODE_WALK = KeyEvent.VK_W,
+            KEYCODE_CROUCH = KeyEvent.VK_SHIFT,
+            KEYCODE_MELEE = KeyEvent.VK_E;
 
     // delays
     private static final long SPRINT_REPEAT_DELAY = 200;
     private static final long FIRE_REPEAT_DELAY = 20;
     private static final long POLLING_DELAY = 20;
+    private static final long SPIN_TO_WIN_REPEAT_DELAY = 200;
 
     private static final String[] LIBRARIES = {
             "jinput-dx8.dll",
@@ -65,9 +70,11 @@ public class ToggleShift {
     private volatile boolean programRunning = true;
     private volatile boolean crouching = false;
     private volatile boolean mouseOverridden = false;
+    private volatile boolean spinToWin = false;
 
     private final Object sprintSpamLock = new Object();
     private final Object firingSpamLock = new Object();
+    private final Object spinToWinLock = new Object();
     private final Robot robot; // Must be initialized in constructor due to Exceptions
 
     private Controller keyboard;
@@ -86,7 +93,7 @@ public class ToggleShift {
         }
     }
 
-    public ToggleShift() throws AWTException {
+    private ToggleShift() throws AWTException {
         robot = new Robot();
         initializeJInput();
     }
@@ -94,6 +101,7 @@ public class ToggleShift {
     private void run() {
         new SprintSpamThread("sprint spam thread " + threadID++).start();
         new FiringSpamThread("firing spam thread " + threadID++).start();
+        new SpinToWinThread("spin to win thread " + threadID++).start();
         new KeyboardThread("keyboard thread " + threadID++).start();
         new MouseThread("mouse thread " + threadID++).start();
     }
@@ -162,9 +170,52 @@ public class ToggleShift {
         }
     }
 
-    /*
-     * This is the thread that actually mashes the sprint button
-     */
+    // spins with the intent of winning
+    private class SpinToWinThread extends Thread {
+        SpinToWinThread(String name) {
+            super(name);
+        }
+
+        @Override
+        public void run() {
+
+            while (programRunning) {
+                synchronized (spinToWinLock) {
+                    // if we need to not be spinning and therefore losing
+                    if (programRunning && (!spinToWin || aiming || firing || altFiring || crouching)) {
+                        try {
+                            spinToWinLock.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            System.exit(1);
+                        }
+                    }
+                }
+
+                robot.keyPress(KEYCODE_WALK);
+
+                // while we need to be spinning to win
+                while (programRunning && spinToWin && !aiming && !firing && !altFiring && !crouching) {
+                    robot.keyPress(KEYCODE_CROUCH);
+                    robot.keyPress(KEYCODE_MELEE);
+                    robot.keyRelease(KEYCODE_MELEE);
+                    robot.keyRelease(KEYCODE_CROUCH);
+                    try {
+                        Thread.sleep(SPIN_TO_WIN_REPEAT_DELAY);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        System.exit(1);
+                    }
+                }
+
+                spinToWin = false; // force us to toggle it back on
+
+                robot.keyRelease(KEYCODE_WALK);
+            }
+        }
+    }
+
+    // mashes sprint button
     private class SprintSpamThread extends Thread {
         SprintSpamThread(String name) {
             super(name);
@@ -219,6 +270,7 @@ public class ToggleShift {
         }
     }
 
+    // spams fire button
     private class FiringSpamThread extends Thread {
         FiringSpamThread(String name) {
             super(name);
@@ -269,6 +321,7 @@ public class ToggleShift {
         }
     }
 
+    // watches keyboard events
     private class KeyboardThread extends Thread {
         KeyboardThread(String name) {
             super(name);
@@ -308,6 +361,15 @@ public class ToggleShift {
                         if (keyboardEvent.getValue() == 1.0f) {
                             desiredSprintSpamState = false; // signal our thread to release the key
                         }
+                    } else if (pressedKey.equals(IDENTIFIER_SPINTOWION) && keyboardEvent.getValue() == 1.0f) {
+                        if (spinToWin) {
+                            spinToWin = false;
+                        } else {
+                            synchronized (spinToWinLock) {
+                                spinToWin = true;
+                                spinToWinLock.notify();
+                            }
+                        }
                     }
                 }
 
@@ -321,6 +383,7 @@ public class ToggleShift {
         }
     }
 
+    // watches mouse events
     private class MouseThread extends Thread {
         MouseThread(String name) {
             super(name);

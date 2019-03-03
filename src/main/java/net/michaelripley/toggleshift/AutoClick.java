@@ -15,6 +15,7 @@ import java.io.IOException;
 public class AutoClick {
     // JInput Identifiers (used for watching for keypresses)
     private final static Identifier IDENTIFIER_SPAMCLICK = Identifier.Button._4;
+    private final static Identifier IDENTIFIER_SPAMTOGGLE = Identifier.Key._0;
 
     // AWT key codes (used for sending fake keypresses)
     private final static int KEYCODE_CLICK = InputEvent.BUTTON1_DOWN_MASK;
@@ -64,6 +65,7 @@ public class AutoClick {
     private void run() {
         new ClickSpamThread("firing spam thread " + threadID++).start();
         new MouseThread("mouse thread " + threadID++).start();
+//        new KeyboardThread("keyboard thread " + threadID++).start();
     }
 
 
@@ -189,16 +191,53 @@ public class AutoClick {
 
                     // if the spam fire button has been pressed
                     if (pressedButton.equals(IDENTIFIER_SPAMCLICK)) {
-                        if (mouseEvent.getValue() == 1.0f) // m1 was just pressed
-                        {
+                        if (mouseEvent.getValue() == 1.0f) { // m1 was just pressed
                             synchronized (clickSpamLock) {
                                 desiredFiringSpamState = true;
                                 clickSpamLock.notify(); // wake the thread
                             }
-                        } else // m4 was just released
-                        {
+                        } else { // m4 was just released
                             desiredFiringSpamState = false;
                         }
+                    }
+                }
+
+                try {
+                    Thread.sleep(POLLING_DELAY);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    System.exit(1);
+                }
+            }
+        }
+    }
+
+    private class KeyboardThread extends Thread {
+        KeyboardThread(String name) {
+            super(name);
+        }
+
+        @Override
+        public void run() {
+            final EventQueue keyboardEventQueue = keyboard.getEventQueue();
+            final Event keyboardEvent = new Event();
+            Identifier pressedButton;
+            boolean lastKeyState = false;
+
+            while (programRunning && keyboard.poll()) {
+                while (keyboardEventQueue.getNextEvent(keyboardEvent)) {
+                    pressedButton = keyboardEvent.getComponent().getIdentifier();
+
+                    // if the spam fire button has been pressed
+                    if (pressedButton.equals(IDENTIFIER_SPAMTOGGLE)) {
+                        final boolean keyState = keyboardEvent.getValue() == 1.0f;
+                        if (keyState && !lastKeyState) { // key was just pressed
+                            synchronized (clickSpamLock) {
+                                desiredFiringSpamState = !desiredFiringSpamState;
+                                clickSpamLock.notify(); // wake the thread
+                            }
+                        }
+                        lastKeyState = keyState;
                     }
                 }
 
